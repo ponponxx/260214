@@ -10,22 +10,36 @@
     
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; }
-        /* 載入中畫面 */
+        
         #loading-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #121212; display: flex; flex-direction: column;
             align-items: center; justify-content: center; z-index: 1000;
-            transition: opacity 0.5s;
         }
+
+        /* 啟動按鈕樣式 */
+        #start-button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #d4af37;
+            color: #121212;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            letter-spacing: 2px;
+            display: none; /* 初始隱藏，載入完後才顯示 */
+        }
+
         .spinner {
             width: 40px; height: 40px; border: 4px solid #d4af37;
             border-top: 4px solid transparent; border-radius: 50%;
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
         #loading-text { color: #d4af37; margin-top: 15px; font-family: sans-serif; letter-spacing: 1px; }
         
-        /* 掃描提示引導 */
         #scan-guide {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             color: #d4af37; border: 1px solid #d4af37; background: rgba(0,0,0,0.7); 
@@ -36,14 +50,15 @@
 </head>
 <body>
     <div id="loading-overlay">
-        <div class="spinner"></div>
-        <div id="loading-text">正在初始化...</div>
+        <div id="loading-spinner" class="spinner"></div>
+        <div id="loading-text">正在初始化戰友資料...</div>
+        <button id="start-button">啟動 AR 驚喜</button>
     </div>
 
     <div id="scan-guide">🔍 請以45度角對準巧克力盒</div>
 
     <a-scene 
-        mindar-image="imageTargetSrc: ./targets.mind; uiScanning: yes; uiError: yes;" 
+        mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiScanning: yes; uiError: yes;" 
         color-space="sRGB" 
         renderer="colorManagement: true, physicallyCorrectLights" 
         vr-mode-ui="enabled: false" 
@@ -73,18 +88,30 @@
     </a-scene>
 
     <script>
-        // 監聽載入事件
+        const sceneEl = document.querySelector('a-scene');
+        const startButton = document.querySelector('#start-button');
+        const loadingSpinner = document.querySelector('#loading-spinner');
+        const loadingText = document.querySelector('#loading-text');
+        const overlay = document.querySelector('#loading-overlay');
+        const guide = document.querySelector('#scan-guide');
+
+        // 當檔案載入完成後
         window.addEventListener('load', () => {
-            const overlay = document.getElementById('loading-overlay');
-            const guide = document.getElementById('scan-guide');
-            // 延遲一點點確保 AR 引擎準備好
+            loadingSpinner.style.display = 'none';
+            loadingText.style.display = 'none';
+            startButton.style.display = 'block'; // 顯示按鈕
+        });
+
+        // 當使用者點擊啟動按鈕
+        startButton.addEventListener('click', () => {
+            const arSystem = sceneEl.systems["mindar-image-system"];
+            arSystem.start(); // 主動啟動 AR 引擎與相機
+            
+            overlay.style.opacity = '0';
             setTimeout(() => {
-                overlay.style.opacity = '0';
-                setTimeout(() => {
-                    overlay.style.display = 'none';
-                    guide.style.display = 'block';
-                }, 500);
-            }, 2000);
+                overlay.style.display = 'none';
+                guide.style.display = 'block';
+            }, 500);
         });
     </script>
 </body>
